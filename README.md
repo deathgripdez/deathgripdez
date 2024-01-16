@@ -1,6 +1,6 @@
 - 👋 Hi, I’m @deathgripdez
-- 👀 I’m interested in UI/IX Development
-- 🌱 I’m currently learning Graphic Design
+- 👀 I’m interested in UX/UI/Frontend/Backend Development
+- 🌱 I’m currently learning Digital Design & Visual Arts
 - 💞️ I’m looking to collaborate on User Experience Interfaces
 - 📫 How to reach me is dmmoreno.dm9@gmail.com
 - 😄 Pronouns: hers, his, theirs
