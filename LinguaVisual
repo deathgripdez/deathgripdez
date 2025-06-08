@@ -1,0 +1,122 @@
+import SwiftUI
+import CryptoKit
+import Foundation
+
+struct UserModel: Identifiable, Codable {
+    let id: UUID
+    var username: String
+    var points: Int
+}
+
+struct LeaderboardEntry: Identifiable, Codable {
+    let id: UUID
+    var username: String
+    var points: Int
+}
+
+class NLPViewModel: ObservableObject {
+    @Published var inputText = ""
+    @Published var tokens: [String] = []
+    @Published var sentiment = ""
+
+    // Dummy local NLP logic (replace with API call for advanced features)
+    func analyzeText() {
+        tokens = inputText.components(separatedBy: .whitespaces)
+        if inputText.lowercased().contains("happy") {
+            sentiment = "Positive"
+        } else if inputText.lowercased().contains("sad") {
+            sentiment = "Negative"
+        } else {
+            sentiment = "Neutral"
+        }
+    }
+}
+
+class LeaderboardViewModel: ObservableObject {
+    @Published var leaderboard: [LeaderboardEntry] = [
+        LeaderboardEntry(id: UUID(), username: "Alice", points: 120),
+        LeaderboardEntry(id: UUID(), username: "Bob", points: 100),
+        LeaderboardEntry(id: UUID(), username: "Carol", points: 80)
+    ]
+
+    func addPoints(for username: String, points: Int) {
+        if let index = leaderboard.firstIndex(where: { $0.username == username }) {
+            leaderboard[index].points += points
+        } else {
+            leaderboard.append(LeaderboardEntry(id: UUID(), username: username, points: points))
+        }
+        leaderboard = leaderboard.sorted { $0.points > $1.points }
+    }
+}
+
+class EncryptionHelper {
+    static func encrypt(_ string: String, key: SymmetricKey) -> Data? {
+        let data = Data(string.utf8)
+        return try? ChaChaPoly.seal(data, using: key).combined
+    }
+
+    static func decrypt(_ data: Data, key: SymmetricKey) -> String? {
+        guard let box = try? ChaChaPoly.SealedBox(combined: data),
+              let decrypted = try? ChaChaPoly.open(box, using: key) else { return nil }
+        return String(data: decrypted, encoding: .utf8)
+    }
+}
+
+// Main UI Views
+
+struct LinguaVisualApp: App {
+    static func main() {
+        let app = LinguaVisualApp()
+        app.body
+    }
+    var body: some Scene {
+        WindowGroup {
+            Content()
+        }
+    }
+}
+
+struct Content: View {
+    @StateObject var nlp = NLPViewModel()
+    @StateObject var leaderboardVM = LeaderboardViewModel()
+    @State var username: String = ""
+
+    var body: some View {
+        TabView {
+            VStack {
+                TextField("Enter text", text: $nlp.inputText)
+                    .padding()
+                Button("Analyze") {
+                    nlp.analyzeText()
+                }
+                .padding()
+                Text("Tokens: \(nlp.tokens.joined(separator: ", "))")
+                Text("Sentiment: \(nlp.sentiment)")
+                Spacer()
+            }
+            .tabItem { Text("NLP") }
+
+            VStack {
+                List(leaderboardVM.leaderboard) { entry in
+                    HStack {
+                        Text(entry.username)
+                        Spacer()
+                        Text("\(entry.points) pts")
+                    }
+                }
+                .frame(height: 200)
+                HStack {
+                    TextField("Username", text: $username)
+                        .frame(width: 150)
+                    Button("Add 10 Points") {
+                        leaderboardVM.addPoints(for: username, points: 10)
+                    }
+                }
+                .padding()
+                Spacer()
+            }
+            .tabItem { Text("Leaderboard") }
+        }
+        .frame(minWidth: 600, minHeight: 400)
+    }
+}
